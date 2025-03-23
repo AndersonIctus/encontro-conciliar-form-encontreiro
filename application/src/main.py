@@ -16,10 +16,11 @@ gc = gspread.authorize(creds)
 # IDs das planilhas de origem e destino (definidos no .env)
 origin_sheet_id = os.getenv('GOOGLE_SHEET_ORIGIN_ID')
 destination_sheet_id = os.getenv('GOOGLE_SHEET_DESTINATION_ID')
+destination_sheet_worksheet = os.getenv('GOOGLE_SHEET_DESTINATION_WORKSHEET')
 
 # Abrir as planilhas
 origin_sheet = gc.open_by_key(origin_sheet_id).sheet1
-destination_sheet = gc.open_by_key(destination_sheet_id).worksheet('FICHAS')
+destination_sheet = gc.open_by_key(destination_sheet_id).worksheet(destination_sheet_worksheet)
 
 # Mapeamento de colunas entre a planilha de origem e destino
 column_mapping = {
