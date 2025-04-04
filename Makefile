@@ -1,9 +1,9 @@
 # Definições
 PYTHON=python
 VENV=venv
-SRC=applications/src
+SRC=application\src
 DIST=dist
-MAIN_SCRIPT=$(SRC)/main.py  # Altere para o arquivo principal do seu projeto
+MAIN_SCRIPT=$(SRC)\main.py  # Altere para o arquivo principal do seu projeto
 EXECUTABLE=sincronizar_inscricoes_encontristas  # Nome do executável final
 
 #	Set-ExecutionPolicy -Scope Process -ExecutionPolicy Unrestricted
@@ -18,9 +18,17 @@ run:
 
 # Faz o build do executável e coloca na pasta dist/
 deploy:
-	rm -rf $(DIST)
-	mkdir -p $(DIST)
-	pyinstaller --onefile --name $(EXECUTABLE) --distpath $(DIST) $(MAIN_SCRIPT)
+	@echo "Criando diretorio de distribuicao..."
+	if exist $(DIST) rmdir /s /q $(DIST)
+	mkdir $(DIST)
+
+	@echo "Copiando arquivos essenciais..."
+	copy .env $(DIST)\
+
+	@echo "Gerando executável..."
+	pyinstaller --onefile --name $(EXECUTABLE) $(MAIN_SCRIPT) 
+
+	@echo "Deploy criado em: $(DIST)\$(EXECUTABLE).exe"
 
 # Remove os arquivos gerados pelo build
 clean:

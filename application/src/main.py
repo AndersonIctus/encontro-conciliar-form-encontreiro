@@ -8,7 +8,14 @@ load_dotenv()
 
 # Carregar as credenciais do Google Sheets a partir do arquivo credentials.json
 credentials_path = os.getenv('GOOGLE_SHEET_CREDENTIALS_PATH')
-creds = Credentials.from_service_account_file(credentials_path, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+
+# Resolve o caminho absoluto, baseado no local do main.py
+main_dir = os.path.dirname(os.path.abspath(__file__))
+full_path = os.path.abspath(os.path.join(main_dir, credentials_path))
+
+print("Usando credenciais em:", full_path)
+
+creds = Credentials.from_service_account_file(full_path, scopes=["https://www.googleapis.com/auth/spreadsheets"])
 
 # Autorizar o cliente do Google Sheets
 gc = gspread.authorize(creds)
@@ -24,26 +31,23 @@ destination_sheet = gc.open_by_key(destination_sheet_id).worksheet(destination_s
 
 # Mapeamento de colunas entre a planilha de origem e destino
 column_mapping = {
+    "Carimbo de data/hora": "DT INSC",
     "NOME COMPLETO": "NOME",
-    "TELEFONE PARA CONTATO (de preferência whatsapp)": "TELEFONE",
     "NOME DE GUERRA": "APELIDO",
     "@ DO INSTAGRAM": "INSTAGRAM",
+    "TELEFONE PARA CONTATO (de preferência whatsapp)": "TELEFONE",
     "ESTADO CIVIL": "ESTADO CIVIL",
+    "IGREJA QUE CONGREGA": "IGREJA",
     "RELIGIÃO": "RELIGIÃO",
-    "EMAIL": "EMAIL",
-    "POSSUI ALGUM TIPO DE ALERGIA OU COMORBIDADE? SE SIM, DESCREVA ABAIXO. SE NÃO, RESPONDA COM NÃO.": "ALERGIA OU COMORBIDADE",
-    "ESTARÁ COM VEÍCULO PRÓPRIO NOS DIAS DO ENCONTRO?": "EQUIPE",  # Adaptar conforme necessário
     "LIGAR PARA": "TEL EMERGENCIA",
-    "PARENTESCO": "PARENTESCO",
     "NOME DO CONTATO DE EMERGÊNCIA": "NOME EMERGENCIA",
+    "PARENTESCO": "PARENTESCO",
+    "POSSUI ALGUM TIPO DE ALERGIA OU COMORBIDADE? SE SIM, DESCREVA ABAIXO. SE NÃO, RESPONDA COM NÃO.": "ALERGIA OU COMORBIDADE",
     "ESCOLHA A EQUIPE QUE DESEJA TRABALHAR:": "EQUIPE",  # Adaptar conforme necessário
     "QUAL O TAMANHO DA CAMISA?": "TAM CAMISA",
-    "NOME DO PAGADOR:": "SITUAÇÃO",  # Adaptar conforme necessário
+    "SITUACAO": "SITUAÇÃO",
     "VALOR PAGO:": "PAGAMENTO",  # Adaptar conforme necessário
-    "DATA DO PAGAMENTO": "OBSERVAÇÃO",  # Adaptar conforme necessário
-    "ANEXE AQUI o comprovante de pagamento em PIX.": "OBSERVAÇÃO",
     "DETALHES DO PAGAMENTO": "OBSERVAÇÃO",
-    "IGREJA QUE CONGREGA": "IGREJA"
 }
 
 # Classe auxiliar para manipulação das planilhas
@@ -52,16 +56,16 @@ class PlanilhaUtils:
     def __init__(self, origin_sheet, destination_sheet):
         self.origin_sheet = origin_sheet
         self.destination_sheet = destination_sheet
+        self.destination_data = self.destination_sheet.get_all_values()
 
     def is_duplicate(self, name, phone):
         """
         Verifica se já existe uma entrada com o mesmo nome e telefone na planilha de destino.
         """
-        destination_data = self.destination_sheet.get_all_values()
-        for row in destination_data[2:]:  # Ignora cabeçalhos (linhas 1 e 2)
+        for row in self.destination_data[2:]:  # Ignora cabeçalhos (linhas 1 e 2)
             dest_name = row[2]  # Índice 2 -> NOME
             dest_phone = row[5]  # Índice 5 -> TELEFONE
-            if dest_name == name and dest_phone == phone:
+            if dest_name == name and str(dest_phone) == str(phone):
                 return True
         return False
 
@@ -69,18 +73,26 @@ class PlanilhaUtils:
         """
         Escreve os dados na planilha de destino.
         """
-        current_id = len(self.destination_sheet.get_all_values()) - 1  # Desconta cabeçalho
+        current_id = len(self.destination_data) - 2  # Desconta cabeçalho
 
         # Preparar a nova linha com os dados
         new_row = [current_id + 1]  # ID numérico crescente
         for col in column_mapping.keys():
             if col in data:
-                new_row.append(data[col])
+                value = data[col]
+                if col == 'ESCOLHA A EQUIPE QUE DESEJA TRABALHAR:' and str(value).startswith("TRANDINHA"):
+                    new_row.append("TRANDINHA")
+                else:
+                    new_row.append(data[col])
             else:
-                new_row.append("")  # Caso o dado não esteja presente na origem
+                if col == 'SITUACAO':
+                    new_row.append("PENDENTE")
+                else:
+                    new_row.append("")  # Caso o dado não esteja presente na origem
 
         # Escrever na planilha de destino
         self.destination_sheet.append_row(new_row)
+        self.destination_data.append(new_row)
 
     def process_data(self):
         """
@@ -96,6 +108,9 @@ class PlanilhaUtils:
             # Verificar se a linha já foi escrita
             if not self.is_duplicate(name, phone):
                 self.write_to_destination(row)
+                print(f"## {name} - Incluído")
+            else:
+                print(f"## {name} - Duplicado já Incluído anteriormente")
 
 
 if __name__ == "__main__":
