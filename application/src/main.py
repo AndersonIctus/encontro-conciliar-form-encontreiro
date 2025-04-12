@@ -100,6 +100,7 @@ class PlanilhaUtils:
         verificando duplicatas.
         """
         origin_data = self.origin_sheet.get_all_records()
+        index = 1
 
         for row in origin_data:
             name = row["NOME COMPLETO"]
@@ -108,9 +109,11 @@ class PlanilhaUtils:
             # Verificar se a linha já foi escrita
             if not self.is_duplicate(name, phone):
                 self.write_to_destination(row)
-                print(f"## {name} - Incluído")
+                print(f"## ({index}) {name} - Incluído")
             else:
-                print(f"## {name} - Duplicado já Incluído anteriormente")
+                print(f"## ({index}) {name} - Duplicado já Incluído anteriormente")
+                
+            index = index + 1
 
 
 if __name__ == "__main__":
