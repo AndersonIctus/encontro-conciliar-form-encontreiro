@@ -82,6 +82,8 @@ class PlanilhaUtils:
                 value = data[col]
                 if col == 'ESCOLHA A EQUIPE QUE DESEJA TRABALHAR:' and str(value).startswith("TRANDINHA"):
                     new_row.append("TRANDINHA")
+                elif col == 'VALOR PAGO:':
+                    new_row.append(float(value)/100)
                 else:
                     new_row.append(data[col])
             else:
