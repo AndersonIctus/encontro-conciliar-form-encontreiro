@@ -27,10 +27,21 @@ Este projeto em Python tem como objetivo **ler respostas de um formulário do Go
 
 Para que o script consiga acessar e editar as planilhas, você deve:
 
-1. Criar um projeto no [Google Cloud Console](https://console.cloud.google.com/).
-2. Ativar a API **Google Sheets** e **Google Drive**.
-3. Criar uma **credencial de conta de serviço** (`credentials.json`).
-4. Compartilhar as planilhas de origem e destino com o e-mail gerado pela conta de serviço (algo como `minha-conta@meu-projeto.iam.gserviceaccount.com`).
+1. Criar (ou selecionar) um projeto no [Google Cloud Console](https://console.cloud.google.com/).
+2. Ativar as APIs **Google Sheets** e **Google Drive** (menu "APIs e serviços" → "Biblioteca").
+3. Criar uma **conta de serviço**: "APIs e serviços" → "Credenciais" → "Criar credenciais" → "Conta de serviço".
+4. Gerar a chave: abra a conta de serviço criada → aba "Chaves" → "Adicionar chave" → "Criar nova chave" → formato **JSON**. O arquivo é baixado automaticamente.
+5. Renomear o arquivo baixado para `credentials.json` e salvar em `credentials/credentials.json`.
+6. Compartilhar as planilhas de origem e destino com o e-mail da conta de serviço (algo como `minha-conta@meu-projeto.iam.gserviceaccount.com`, encontrado no campo `client_email` do `credentials.json`), dando permissão de **Editor**. Ou seja, essa nova conta deve estar na sessão Compartilhamento como se fosse um usuário compartilhando a planilha com essa conta.
+
+### Já tenho a conta de serviço, mas perdi o `credentials.json`
+
+O Google **não permite reobter a chave privada** de um arquivo já baixado — só é possível gerar uma **nova chave** para a conta de serviço existente (passo 4 acima, na mesma conta). Isso não afeta o compartilhamento já feito nas planilhas, pois o e-mail da conta continua o mesmo.
+
+> ⚠️ **Atenção:**
+>
+> - `credentials.json` contém uma chave privada — nunca deve ser commitado no Git (confira se está no `.gitignore`).
+> - Se aparecer o erro `Caller does not have permission` ao rodar o script, normalmente falta compartilhar a planilha com o e-mail da conta de serviço (passo 6).
 
 ---
 

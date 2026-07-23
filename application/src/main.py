@@ -2,15 +2,24 @@ import gspread
 from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
 import os
+import sys
+
+print("============================= S T A R T =============================")
+
+# Resolve o caminho base: pasta do .exe quando empacotado (PyInstaller),
+# pasta do main.py quando executado via "python main.py"
+if getattr(sys, 'frozen', False):
+    main_dir = os.path.dirname(sys.executable)
+else:
+    main_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Carregar variáveis de ambiente do arquivo .env
+# (python-dotenv já detecta sys.frozen: usa cwd no .exe, sobe diretórios em modo dev)
 load_dotenv()
 
 # Carregar as credenciais do Google Sheets a partir do arquivo credentials.json
 credentials_path = os.getenv('GOOGLE_SHEET_CREDENTIALS_PATH')
 
-# Resolve o caminho absoluto, baseado no local do main.py
-main_dir = os.path.dirname(os.path.abspath(__file__))
 full_path = os.path.abspath(os.path.join(main_dir, credentials_path))
 
 print("Usando credenciais em:", full_path)
@@ -31,7 +40,7 @@ destination_sheet = gc.open_by_key(destination_sheet_id).worksheet(destination_s
 
 # Mapeamento de colunas entre a planilha de origem e destino
 column_mapping = {
-    "Carimbo de data/hora": "DT INSC",
+    "Timestamp": "DT INSC",
     "NOME COMPLETO": "NOME",
     "NOME DE GUERRA": "APELIDO",
     "@ DO INSTAGRAM": "INSTAGRAM",
@@ -46,6 +55,7 @@ column_mapping = {
     "ESCOLHA A EQUIPE QUE DESEJA TRABALHAR:": "EQUIPE",  # Adaptar conforme necessário
     "QUAL O TAMANHO DA CAMISA?": "TAM CAMISA",
     "SITUACAO": "SITUAÇÃO",
+    "ESTARÁ COM VEÍCULO PRÓPRIO NOS DIAS DO ENCONTRO?": "VEICULO",
     "VALOR PAGO:": "PAGAMENTO",  # Adaptar conforme necessário
     "DETALHES DO PAGAMENTO": "OBSERVAÇÃO",
 }
@@ -83,7 +93,10 @@ class PlanilhaUtils:
                 if col == 'ESCOLHA A EQUIPE QUE DESEJA TRABALHAR:' and str(value).startswith("TRANDINHA"):
                     new_row.append("TRANDINHA")
                 elif col == 'VALOR PAGO:':
-                    new_row.append(float(value)/100)
+                    if float(value) == 0:
+                        new_row.append(0)
+                    else:
+                        new_row.append(float(value)/100)
                 else:
                     new_row.append(data[col])
             else:
