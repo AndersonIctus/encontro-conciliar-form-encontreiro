@@ -69,7 +69,7 @@ Crie um arquivo `.env` na raiz com o seguinte conteúdo:
 
 ```env
 GOOGLE_SHEET_CREDENTIALS_PATH=..\..\credentials\credentials.json
-GOOGLE_SHEET_ORIGIN_ID=<ID_PLANILHA_ORIGEM>
+GOOGLE_SHEET_ORIGIN_ID=<ID_PLANILHA_ORIGEM_1>;<ID_PLANILHA_ORIGEM_2>
 GOOGLE_SHEET_DESTINATION_ID=<ID_PLANILHA_DESTINO>
 GOOGLE_SHEET_DESTINATION_WORKSHEET=FICHAS
 ```
@@ -80,6 +80,8 @@ GOOGLE_SHEET_DESTINATION_WORKSHEET=FICHAS
 > https://docs.google.com/spreadsheets/d/1abcD34EFghij56K8vwXyZ9z0abcdEfGh/edit#gid=0
 > ```
 > O `ID` neste caso seria: `1abcD34EFghij56K8vwXyZ9z0abcdEfGh`
+>
+> **`GOOGLE_SHEET_ORIGIN_ID` aceita múltiplas planilhas de origem**, separadas por ponto-e-vírgula (`;`). O script processa cada uma delas, na ordem informada, escrevendo tudo na mesma planilha de destino e verificando duplicidade entre todas.
 
 ---
 

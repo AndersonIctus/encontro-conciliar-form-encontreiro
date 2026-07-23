@@ -30,12 +30,17 @@ creds = Credentials.from_service_account_file(full_path, scopes=["https://www.go
 gc = gspread.authorize(creds)
 
 # IDs das planilhas de origem e destino (definidos no .env)
-origin_sheet_id = os.getenv('GOOGLE_SHEET_ORIGIN_ID')
+# GOOGLE_SHEET_ORIGIN_ID aceita uma lista de IDs separados por ponto-e-vírgula
+origin_sheet_ids = [
+    sheet_id.strip()
+    for sheet_id in os.getenv('GOOGLE_SHEET_ORIGIN_ID', '').split(';')
+    if sheet_id.strip()
+]
 destination_sheet_id = os.getenv('GOOGLE_SHEET_DESTINATION_ID')
 destination_sheet_worksheet = os.getenv('GOOGLE_SHEET_DESTINATION_WORKSHEET')
 
 # Abrir as planilhas
-origin_sheet = gc.open_by_key(origin_sheet_id).sheet1
+origin_sheets = [gc.open_by_key(sheet_id).sheet1 for sheet_id in origin_sheet_ids]
 destination_sheet = gc.open_by_key(destination_sheet_id).worksheet(destination_sheet_worksheet)
 
 # Mapeamento de colunas entre a planilha de origem e destino
@@ -63,8 +68,7 @@ column_mapping = {
 # Classe auxiliar para manipulação das planilhas
 class PlanilhaUtils:
 
-    def __init__(self, origin_sheet, destination_sheet):
-        self.origin_sheet = origin_sheet
+    def __init__(self, destination_sheet):
         self.destination_sheet = destination_sheet
         self.destination_data = self.destination_sheet.get_all_values()
 
@@ -109,12 +113,12 @@ class PlanilhaUtils:
         self.destination_sheet.append_row(new_row)
         self.destination_data.append(new_row)
 
-    def process_data(self):
+    def process_data(self, origin_sheet):
         """
         Processa os dados da planilha de origem e os escreve na planilha de destino,
         verificando duplicatas.
         """
-        origin_data = self.origin_sheet.get_all_records()
+        origin_data = origin_sheet.get_all_records()
         index = 1
 
         for row in origin_data:
@@ -132,10 +136,11 @@ class PlanilhaUtils:
 
 
 if __name__ == "__main__":
-    # Instancia a classe auxiliar com as planilhas de origem e destino
-    planilha_utils = PlanilhaUtils(origin_sheet, destination_sheet)
+    # Instancia a classe auxiliar com a planilha de destino
+    planilha_utils = PlanilhaUtils(destination_sheet)
 
-    # Processar e transferir os dados
-    planilha_utils.process_data()
+    # Processar e transferir os dados de cada planilha de origem
+    for origin_sheet in origin_sheets:
+        planilha_utils.process_data(origin_sheet)
 
     print("Dados processados e escritos na planilha de destino.")
