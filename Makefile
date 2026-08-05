@@ -1,38 +1,36 @@
 # Definições
 PYTHON=python
 VENV=venv
-SRC=application\src
+VENV_PYTHON=$(VENV)/Scripts/python.exe
+SRC=application/src
 DIST=dist
-MAIN_SCRIPT=$(SRC)\main.py  # Altere para o arquivo principal do seu projeto
-EXECUTABLE=sincronizar_inscricoes_encontristas  # Nome do executável final
+MAIN_SCRIPT=$(SRC)/main.py
+EXECUTABLE=sincronizar_inscricoes_encontristas
 
-#	Set-ExecutionPolicy -Scope Process -ExecutionPolicy Unrestricted
-# Ativa o venv e instala dependências
+# Cria o venv e instala dependências
 install:
 	$(PYTHON) -m venv $(VENV)
-	.\$(VENV)\Scripts\activate && pip install -r requirements.txt
+	$(VENV_PYTHON) -m pip install --upgrade pip
+	$(VENV_PYTHON) -m pip install -r requirements.txt
 
 # Roda o código no ambiente virtual
 run:
-	$(VENV)/Scripts/activate && $(PYTHON) $(MAIN_SCRIPT)
+	$(VENV_PYTHON) $(MAIN_SCRIPT)
 
 # Faz o build do executável e coloca na pasta dist/
 deploy:
 	@echo "Criando diretorio de distribuicao..."
-	if exist $(DIST) rmdir /s /q $(DIST)
-	mkdir $(DIST)
+	rm -rf $(DIST)
+	mkdir -p $(DIST)
 
 	@echo "Copiando arquivos essenciais..."
-	copy .env $(DIST)\
+	cp .env $(DIST)/
 
 	@echo "Gerando executável..."
-	pyinstaller --onefile --name $(EXECUTABLE) $(MAIN_SCRIPT) 
+	$(VENV_PYTHON) -m PyInstaller --onefile --name $(EXECUTABLE) $(MAIN_SCRIPT)
 
-	@echo "Deploy criado em: $(DIST)\$(EXECUTABLE).exe"
+	@echo "Deploy criado em: $(DIST)/$(EXECUTABLE).exe"
 
 # Remove os arquivos gerados pelo build
 clean:
 	rm -rf $(DIST) build __pycache__ *.spec
-
-exit:
-	deactivate
