@@ -3,6 +3,8 @@ from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
 import os
 import sys
+import time
+from datetime import datetime
 
 print("============================= S T A R T =============================")
 
@@ -61,9 +63,15 @@ column_mapping = {
     "QUAL O TAMANHO DA CAMISA?": "TAM CAMISA",
     "SITUACAO": "SITUAÇÃO",
     "ESTARÁ COM VEÍCULO PRÓPRIO NOS DIAS DO ENCONTRO?": "VEICULO",
+    "DATA DO PAGAMENTO": "DT PAGAMENTO",
+    "NOME DO PAGADOR:": "NOME PAGADOR",
     "VALOR PAGO:": "PAGAMENTO",  # Adaptar conforme necessário
     "DETALHES DO PAGAMENTO": "OBSERVAÇÃO",
+    "MONTAGEM": "MONTAGEM",
 }
+
+# Limite de escritas por minuto na planilha de destino
+MAX_WRITES_PER_MINUTE = 50
 
 # Classe auxiliar para manipulação das planilhas
 class PlanilhaUtils:
@@ -71,6 +79,23 @@ class PlanilhaUtils:
     def __init__(self, destination_sheet):
         self.destination_sheet = destination_sheet
         self.destination_data = self.destination_sheet.get_all_values()
+        self.write_count = 0
+        self.window_start = time.time()
+
+    def _throttle_writes(self):
+        """
+        Garante que no máximo MAX_WRITES_PER_MINUTE escritas sejam feitas por minuto.
+        Ao atingir o limite, aguarda o tempo restante da janela de 60s e zera o
+        contador, liberando mais MAX_WRITES_PER_MINUTE escritas.
+        """
+        if self.write_count >= MAX_WRITES_PER_MINUTE:
+            sleep_time = 60 - (time.time() - self.window_start)
+            if sleep_time > 0:
+                print(f"## Limite de {MAX_WRITES_PER_MINUTE} escritas por minuto atingido. "
+                      f"Dormindo {sleep_time:.1f}s antes de continuar...")
+                time.sleep(sleep_time)
+            self.write_count = 0
+            self.window_start = time.time()
 
     def is_duplicate(self, name, phone):
         """
@@ -101,17 +126,34 @@ class PlanilhaUtils:
                         new_row.append(0)
                     else:
                         new_row.append(float(value)/100)
+                elif col == 'DATA DO PAGAMENTO':
+                    try:
+                        payment_date = datetime.strptime(str(value), '%m/%d/%Y')
+                        new_row.append(payment_date.strftime('%d/%m/%Y'))
+                    except ValueError:
+                        try:
+                            payment_date = datetime.strptime(str(value), '%m/%d/%y')
+                            new_row.append(payment_date.strftime('%d/%m/%Y'))
+                        except ValueError:
+                            new_row.append(value)
                 else:
                     new_row.append(data[col])
             else:
                 if col == 'SITUACAO':
                     new_row.append("PENDENTE")
+                elif col == 'MONTAGEM':
+                    new_row.append("NÃO VERIFICADO")
                 else:
+                    print(f"## Coluna '{col}' não encontrada na origem. Adicionando valor vazio.")
                     new_row.append("")  # Caso o dado não esteja presente na origem
+
+        # Respeitar o limite de escritas por minuto antes de escrever
+        self._throttle_writes()
 
         # Escrever na planilha de destino
         self.destination_sheet.append_row(new_row)
         self.destination_data.append(new_row)
+        self.write_count += 1
 
     def process_data(self, origin_sheet):
         """
@@ -143,4 +185,6 @@ if __name__ == "__main__":
     for origin_sheet in origin_sheets:
         planilha_utils.process_data(origin_sheet)
 
+    print("Foram inscritos na planilha de destino: ", planilha_utils.write_count)
     print("Dados processados e escritos na planilha de destino.")
+    print("============================= E N D =============================")

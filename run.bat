@@ -14,7 +14,15 @@ for /f "tokens=1,* delims==" %%A in (".env") do (
     set "%%A=%%B"
 )
 
-REM Executa o main.py
-python application\src\main.py
+REM Verifica se o venv existe
+if not exist "venv\Scripts\python.exe" (
+    echo [ERRO] Ambiente virtual "venv" nao encontrado!
+    echo Execute "make install" ou "python -m venv venv" e instale requirements.txt.
+    pause
+    exit /b 1
+)
+
+REM Executa o main.py usando o Python do venv
+venv\Scripts\python.exe application\src\main.py
 
 pause
