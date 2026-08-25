@@ -119,8 +119,10 @@ class PlanilhaUtils:
         for col in column_mapping.keys():
             if col in data:
                 value = data[col]
-                if col == 'ESCOLHA A EQUIPE QUE DESEJA TRABALHAR:' and str(value).startswith("TRANDINHA"):
-                    new_row.append("TRANDINHA")
+                if col == 'ESCOLHA A EQUIPE QUE DESEJA TRABALHAR:' and str(value).startswith("TRÂNSITO"):
+                    new_row.append("TRÂNSITO")
+                elif col == 'ESCOLHA A EQUIPE QUE DESEJA TRABALHAR:' and str(value).startswith("BANDINHA"):
+                    new_row.append("BANDINHA")
                 elif col == 'VALOR PAGO:':
                     if float(value) == 0:
                         new_row.append(0)
