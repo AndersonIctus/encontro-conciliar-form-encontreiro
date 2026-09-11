@@ -17,6 +17,7 @@ Este projeto em Python tem como objetivo **ler respostas de um formulário do Go
 ## ⚙️ Pré-requisitos
 
 - Python 3.11+ instalado.
+- [uv](https://docs.astral.sh/uv/) instalado (gerencia o ambiente virtual e a execução do projeto).
 - Conta no [Google Cloud Console](https://console.cloud.google.com/).
 - Permissão de leitura na planilha de origem.
 - Permissão de escrita na planilha de destino.
@@ -93,6 +94,15 @@ GOOGLE_SHEET_DESTINATION_WORKSHEET=FICHAS
 make install
 make run
 ```
+
+Ou, diretamente (Linux/macOS/Git Bash):
+
+```bash
+make install
+./run.sh
+```
+
+No Windows (sem bash), use o `run.bat`.
 
 ### Criar executável (`.exe`)
 
